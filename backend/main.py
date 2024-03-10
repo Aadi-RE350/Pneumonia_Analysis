@@ -1,11 +1,7 @@
 from flask import Flask,jsonify
-from dotenv import load_dotenv
-from werkzeug.utils import secure_filename
-import os
-import pickle
-import numpy as np
 
 from blood_report_predict import prediction
+from chat_bot import gem_response
 
 #gemini
 from flask import Flask, render_template, request, jsonify
@@ -13,51 +9,45 @@ import google.generativeai as genai
 
 app = Flask(__name__)
 
-load_dotenv()
-api_key=os.getenv('api_key')
-genai.configure(api_key=api_key)
-
-generation_config = {
-    "temperature": 0.9,
-    "top_p": 1,
-    "top_k": 1,
-    "max_output_tokens": 2048,
-}
-
-safety_settings = [
-    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-]
-
-model = genai.GenerativeModel(
-    model_name="gemini-1.0-pro",
-    generation_config=generation_config,
-    safety_settings=safety_settings,
-)
-# Ensure 'uploads' directory exists
-uploads_dir = os.path.join(app.instance_path, 'uploads')
-os.makedirs(uploads_dir, exist_ok=True)
-
-#load models
-predict_model = pickle.load(open('model_training\models\RandomForest__model.pkl', 'rb'))
-
 @app.route('/')
 def home():
     return jsonify({"message": "prediction"}), 200
 
-@app.route('/predict',methods=['POST'])
+@app.route('/predict')
 def predict():
-    features = [x for x in request.form.values()]
+    #features = [x for x in request.form.values()]
+    features=[48,9261,6.1,0.34,23,0,1,1,0,0]
+    labels = ['age', 'wbc count', 'crp level', 'esr level', 'procalcitonin level']
+    symptoms = ['cough', 'chills', 'productive cough', 'chest pain', 'fatigue', 'shortness of breadth']
+
+    values = []
+    # Extract values for labels
+    for label in labels:
+        value = request.form.get(label)
+        if value is not None:
+            values.append(value)
+
+    # Extract values for symptoms
+    for symptom in symptoms:
+        value = request.form.get(symptom)
+        if value is not None:
+            values.append(value)
+
     if len(features)==11:
-        features_cleaned = [int(x) if x.isdigit() else 0 for x in features[2:]]
-        predicted=prediction(features_cleaned)
-        return jsonify({'Label':predicted[0],'Confidence':round(predicted[1],2)})
+        #features_cleaned = [int(x) if x.isdigit() else 0 for x in features[2:]]
+        predicted=prediction(values)
+        return jsonify({'Label':predicted[0],'Confidence':round(predicted[1],2)}),200
 
     else:
-        return jsonify({'message':'Bad response'}),400
+        return jsonify({'message':values}),400
+
+@app.route('/gemini',methods=['POST'])
+def gemini_bot():
+    user_input = request.json['user_input']
+    genai_response = gem_response(user_input)
+    return jsonify({'genai_response': genai_response}),200
+
+
 
 if __name__ == '__main__':
-    #app.run(debug=True)
-    pass
+    app.run(debug=True)

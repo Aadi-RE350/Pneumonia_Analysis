@@ -28,3 +28,8 @@ model = genai.GenerativeModel(
     generation_config=generation_config,
     safety_settings=safety_settings,
 )
+
+def gem_response(user_input):
+    convo = model.start_chat(history=[])
+    convo.send_message(user_input)
+    return convo.last.text
