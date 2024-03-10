@@ -13,10 +13,8 @@ app = Flask(__name__)
 def home():
     return jsonify({"message": "prediction"}), 200
 
-@app.route('/predict')
+@app.route('/predict',methods=['POST'])
 def predict():
-    #features = [x for x in request.form.values()]
-    features=[48,9261,6.1,0.34,23,0,1,1,0,0]
     labels = ['age', 'wbc count', 'crp level', 'esr level', 'procalcitonin level']
     symptoms = ['cough', 'chills', 'productive cough', 'chest pain', 'fatigue', 'shortness of breadth']
 
@@ -29,11 +27,11 @@ def predict():
 
     # Extract values for symptoms
     for symptom in symptoms:
-        value = request.form.get(symptom)
+        value = request.form.get(symptom,0) # by default zero
         if value is not None:
             values.append(value)
 
-    if len(features)==11:
+    if len(values)==11:
         #features_cleaned = [int(x) if x.isdigit() else 0 for x in features[2:]]
         predicted=prediction(values)
         return jsonify({'Label':predicted[0],'Confidence':round(predicted[1],2)}),200

@@ -11,8 +11,8 @@ def prediction(features_cleaned):
     final_features = [np.array(features_cleaned)]
     prediction = predict_model.predict_proba(final_features)
     confidence = dict(zip(predict_model.classes_, prediction[0] * 100))
-    max_key = max(confidence, key=confidence.get)
-    max_value = confidence[max_key]
+    max_key = int(max(confidence, key=confidence.get))
+    max_value = float(confidence[max_key])
     result = [max_key, max_value]
 
         # if max_key == 1:
