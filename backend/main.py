@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return jsonify({"message": "prediction"}), 200
+    return jsonify({"message": "server runnung"}), 200
 
 @app.route('/predict',methods=['POST'])
 def predict():
