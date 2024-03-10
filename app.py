@@ -1,4 +1,4 @@
-# app.py
+
 
 from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
@@ -7,6 +7,7 @@ import pickle
 import numpy as np
 from sklearn.metrics import accuracy_score
 import requests
+import re
 
 app = Flask(__name__)
 
@@ -69,7 +70,15 @@ def predict():
         text = f'Pnuemonia Not found with the confidence of {round(max_value, 2)}'
     return render_template('index.html', prediction_text=text)
 
+def query(model_url, api_key, filename):
+    API_URL = model_url
+    headers = {"Authorization": f"Bearer {api_key}"}
+    with open(filename, "rb") as f:
+        data = f.read()
+    response = requests.post(API_URL, headers=headers, data=data)
+    return response.json()
 @app.route('/detect', methods=['GET', 'POST'])
+
 def detect():
     if request.method == 'POST':
         uploaded_file = request.files['image']
@@ -97,9 +106,27 @@ def gemini():
 def send_message():
     user_input = request.json['user_input']
 
-    convo = model.start_chat(history=[])
-    convo.send_message(user_input)
-    genai_response = convo.last.text
+    # Check if the user's input contains whole words related to pneumonia or healthcare
+    pneumonia_keywords = ['pneumonia', 'lung infection', 'respiratory', 'breathing problem']
+    healthcare_keywords = ['healthcare', 'medical', 'hospital', 'doctor', 'nurse']
+
+    def contains_whole_word(input_str, keyword_list):
+        return any(re.search(rf'\b{re.escape(keyword)}\b', input_str.lower()) for keyword in keyword_list)
+
+    if contains_whole_word(user_input, pneumonia_keywords):
+        # Process the request and get a response related to pneumonia
+        convo = model.start_chat(history=[])
+        convo.send_message(user_input)
+        genai_response = convo.last.text
+    elif contains_whole_word(user_input, healthcare_keywords):
+        # Process the request and get a response related to healthcare
+        convo = model.start_chat(history=[])
+        convo.send_message(user_input)
+        genai_response = convo.last.text
+        print(user_input)
+    else:
+        # If the question is not related to pneumonia or healthcare, return a restricted response
+        genai_response = "I'm sorry, I can only provide information related to pneumonia and healthcare."
 
     return jsonify({'genai_response': genai_response})
 
