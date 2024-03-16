@@ -1,13 +1,12 @@
-from flask import Flask,jsonify
-
+from flask import Flask,jsonify,request
+from flask_cors import CORS
 from blood_report_predict import prediction
 from chat_bot import gem_response
-
-#gemini
-from flask import Flask, render_template, request, jsonify
-import google.generativeai as genai
+from detect import image_detection
+import os
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
 def home():
@@ -15,19 +14,12 @@ def home():
 
 @app.route('/predict',methods=['POST'])
 def predict():
-    labels = ['age', 'wbc count', 'crp level', 'esr level', 'procalcitonin level']
-    symptoms = ['cough', 'chills', 'productive cough', 'chest pain', 'fatigue', 'shortness of breadth']
-
+    labels = ['age', 'wbcCount', 'crpLevel', 'esrLevel', 'procalcitoninLevel','cough', 'chills', 'productiveCough', 'chestPain', 'fatigue', 'shortnessOfBreath']
     values = []
+    data=request.get_json()
     # Extract values for labels
     for label in labels:
-        value = request.form.get(label)
-        if value is not None:
-            values.append(value)
-
-    # Extract values for symptoms
-    for symptom in symptoms:
-        value = request.form.get(symptom,0) # by default zero
+        value = data.get(label)
         if value is not None:
             values.append(value)
 
@@ -43,9 +35,19 @@ def predict():
 def gemini_bot():
     user_input = request.json['user_input']
     genai_response = gem_response(user_input)
-    return jsonify({'genai_response': genai_response}),200
+    return jsonify({"User input":user_input,'genai_response': genai_response.replace('**', '').replace('\\n', '\n').replace('\\n*','\n')}),200
 
-
+@app.route('/image_detect',methods=['POST'])
+def image_detect():
+    # Ensure 'uploads' directory exists
+    uploads_dir = os.path.join(app.instance_path, 'uploads')
+    os.makedirs(uploads_dir, exist_ok=True)
+    if request.method == 'POST':
+        uploaded_file = request.files['image']
+        if uploaded_file != None:
+            return jsonify(image_detection(uploads_dir,uploaded_file)),200
+        else:
+            return jsonify({"message":"Make sure you select an image"})
 
 if __name__ == '__main__':
     app.run(debug=True)

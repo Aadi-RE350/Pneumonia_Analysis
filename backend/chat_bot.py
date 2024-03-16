@@ -1,8 +1,7 @@
 from dotenv import load_dotenv
-from werkzeug.utils import secure_filename
 import google.generativeai as genai
-from flask import Flask,jsonify
 import os
+import re
 
 #setup
 load_dotenv()
@@ -30,6 +29,25 @@ model = genai.GenerativeModel(
 )
 
 def gem_response(user_input):
-    convo = model.start_chat(history=[])
-    convo.send_message(user_input)
-    return convo.last.text
+
+    # Check if the user's input contains whole words related to pneumonia or healthcare
+    pneumonia_keywords = ['pneumonia', 'lung infection', 'respiratory', 'breathing problem']
+    healthcare_keywords = ['healthcare', 'medical', 'hospital', 'doctor', 'nurse']
+
+    def contains_whole_word(input_str, keyword_list):
+        return any(re.search(rf'\b{re.escape(keyword)}\b', input_str.lower()) for keyword in keyword_list)
+
+    if contains_whole_word(user_input, pneumonia_keywords):
+        # Process the request and get a response related to pneumonia
+        convo = model.start_chat(history=[])
+        convo.send_message(user_input)
+        return convo.last.text
+    elif contains_whole_word(user_input, healthcare_keywords):
+        # Process the request and get a response related to healthcare
+        convo = model.start_chat(history=[])
+        convo.send_message(user_input)
+        return convo.last.text
+        print(user_input)
+    else:
+        # If the question is not related to pneumonia or healthcare, return a restricted response
+        return "I'm sorry, I can only provide information related to pneumonia and healthcare."

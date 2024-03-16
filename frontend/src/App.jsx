@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from 'react'
 import Home_page from './home_page'
 import './App.css'
@@ -7,7 +8,7 @@ function App() {
 
   return (
     <>
-    <Home_page/>
+      <Home_page></Home_page>
     </>
   )
 }
