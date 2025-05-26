@@ -10,6 +10,10 @@ This project aims to predict the likelihood of pneumonia in patients using both 
 3.https://github.com/Somesh2512<br>
 4.https://github.com/jatinAB<br>
 
+## Result
+
+![alt text](image.png)
+![alt text](image-1.png)
 
 ### Repo Activity
 ![Alt](https://repobeats.axiom.co/api/embed/230766614590c1c73fdf241b733f07ba3241d75a.svg "Repobeats analytics image")
